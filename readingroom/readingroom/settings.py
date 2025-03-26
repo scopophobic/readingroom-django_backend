@@ -63,7 +63,9 @@ ROOT_URLCONF = "readingroom.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [
+            BASE_DIR / 'TEMPLATES',
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
