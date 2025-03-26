@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{{ book.title }}</h1>
+
+    {% if book.authors %}
+        <p><strong>Authors:</strong> {{ book.authors|join:", " }}</p>
+    {% endif %}
+
+    {% if book.imageLinks and book.imageLinks.thumbnail %}
+        <img src="{{ book.imageLinks.thumbnail }}" alt="Book Cover">
+    {% endif %}
+
+    {% if book.description %}
+        <div style="margin-top: 20px;">
+            <strong>Description:</strong>
+            <p>{{ book.description }}</p>
+        </div>
+    {% endif %}
+
+    {% if book.publisher %}
+        <p><strong>Publisher:</strong> {{ book.publisher }}</p>
+    {% endif %}
+
+    {% if book.publishedDate %}
+        <p><strong>Published Date:</strong> {{ book.publishedDate }}</p>
+    {% endif %}
+
+    {% if book.industryIdentifiers %}
+        <strong>Identifiers:</strong>
+        <ul>
+            {% for identifier in book.industryIdentifiers %}
+                <li>{{ identifier.type }}: {{ identifier.identifier }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <a href="{% url 'fetch_books' %}">Back to Search Results</a>
+{% endblock %}
