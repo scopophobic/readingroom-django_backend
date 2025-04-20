@@ -40,6 +40,10 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    #i added 
+    'rest_framework',
+    'rest_framework_simplejwt',
+
     # apps 
 
     'users',
@@ -47,6 +51,15 @@ INSTALLED_APPS = [
     'posts',
     'comments',
 ]
+
+# i added this 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+# i added
+AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -93,12 +106,12 @@ WSGI_APPLICATION = "readingroom.wsgi.application"
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'readingRoom',
-        'USER': 'postgres',
-        'PASSWORD': '1978',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'readingroom',
+        'USER': 'djangoread',
+        'PASSWORD': 'readingroom',
         'HOST': 'localhost',
-        'PORT': '5433',
+        'PORT': '5432',
     }
 }
 
