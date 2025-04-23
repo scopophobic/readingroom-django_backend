@@ -40,17 +40,72 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    
+
     #i added 
     'rest_framework',
     'rest_framework_simplejwt',
 
-    # apps 
+
+
+    # i added for google auth
+    'rest_framework.authtoken',
+
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'django.contrib.sites',
+
+    # base apps 
 
     'users',
     'books',
     'posts',
     'comments',
 ]
+# i added for google auth
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+
+
+# this is to control the response from the auth service. 
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+    }
+}
+
+
+# added this for the logout button on home page, instead of form :)
+# ACCOUNT_LOGOUT_METHOD = "GET"
+
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # or 'optional' / 'mandatory' if you want email confirmation
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_QUERY_EMAIL = True
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+
+
+# i added for google auth
+SITE_ID = 1
 
 # i added this 
 REST_FRAMEWORK = {
@@ -69,6 +124,10 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
+
+    #added this for gogole auth
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "readingroom.urls"

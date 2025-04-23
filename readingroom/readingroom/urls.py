@@ -11,6 +11,7 @@ urlpatterns = [
     path('books/', include('books.urls')),
 
     path('api/users/', include('users.urls')),
+    path('accounts/', include('allauth.urls'))
     # path('api/posts/', include('posts.urls')),
     # path('api/books/', include('books.urls')),
     # path('api/comments/', include('comments.urls')),

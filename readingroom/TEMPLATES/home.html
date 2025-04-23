@@ -4,5 +4,15 @@
 {% block content %}
 <h1>home page</h1>
 
+{% if user.is_authenticated %}
+  <h2>Welcome, {{ user.first_name }}!</h2>
+  <a href="/accounts/logout/">Logout</a>
+
+{% else %}
+  <h2>Welcome to the site!</h2>
+  <a href="/accounts/login/">Login</a>
+  <a href="/accounts/signup/">Signup</a>
+{% endif %}
+
 {% endblock %}
 
