@@ -9,9 +9,9 @@ urlpatterns = [
     path('', views.home),
     path('auth/', include('django.contrib.auth.urls')),
     path('books/', include('books.urls')),
-
+    path('posts/', include('posts.urls')),
     path('api/users/', include('users.urls')),
-    path('accounts/', include('allauth.urls'))
+    path('accounts/', include('allauth.urls')),
     # path('api/posts/', include('posts.urls')),
     # path('api/books/', include('books.urls')),
     # path('api/comments/', include('comments.urls')),

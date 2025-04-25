@@ -15,10 +15,11 @@ class Book(models.Model):
     description = models.TextField(blank=True, null = True)
     publication_date = models.DateField(blank=True, null=True)
     cover_image_url = models.URLField(blank=True, null=True)
-    isbn = models.CharField(max_length=20, blank=True, null=True)
+    # isbn = models.CharField(max_length=20, blank=True, null=True)
+    # publisher = models.CharField(max_length=255, blank=True, null=True)
     publisher = models.CharField(max_length=255, blank=True, null=True)
+    isbn = models.CharField(max_length=50, blank=True, null=True)
     genres = models.ManyToManyField(Genre, blank=True)
-
     google_book_id = models.CharField(max_length=255, unique = True, blank = True, null = True)
 
     def __str__(self):

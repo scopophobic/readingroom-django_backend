@@ -1,0 +1,13 @@
+<form method="POST">
+    {% csrf_token %}
+    <input name="query" type="text" placeholder="Search books" />
+    <button type="submit">Search</button>
+  </form>
+  
+  {% for book in book_data %}
+    <div>
+      <h3>{{ book.volumeInfo.title }}</h3>
+      <p>{{ book.volumeInfo.description }}</p>
+      <a href="{% url 'create_post' book.id %}">Post about this book</a>
+    </div>
+  {% endfor %}
