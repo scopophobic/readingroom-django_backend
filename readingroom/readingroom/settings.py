@@ -47,7 +47,10 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
 
 
-
+    # 'rest_framework',
+    # this is swagger UI
+    'drf_yasg',
+    'drf_spectacular',
     # i added for google auth
     'rest_framework.authtoken',
 
@@ -104,6 +107,9 @@ SOCIALACCOUNT_QUERY_EMAIL = True
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+#i added this to include media
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # i added for google auth
@@ -114,7 +120,15 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'ReadingRoom API',
+    'DESCRIPTION': 'API documentation with drf-spectacular',
+    'VERSION': '1.0.0',
+}
+
 # i added
 AUTH_USER_MODEL = 'users.User'
 
@@ -175,6 +189,7 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
 
 
 # Password validation

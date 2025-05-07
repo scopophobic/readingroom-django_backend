@@ -9,18 +9,16 @@ class Genre(models.Model):
 
 
 class Book(models.Model):
-     # name, author, Published Date, discription, book_id
-    title = models.CharField(max_length=255)
-    authors = models.CharField(blank = True, null = True)
-    description = models.TextField(blank=True, null = True)
+    title = models.CharField(max_length=300)
+    authors = models.CharField(max_length=500, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
     publication_date = models.DateField(blank=True, null=True)
-    cover_image_url = models.URLField(blank=True, null=True)
-    # isbn = models.CharField(max_length=20, blank=True, null=True)
-    # publisher = models.CharField(max_length=255, blank=True, null=True)
-    publisher = models.CharField(max_length=255, blank=True, null=True)
-    isbn = models.CharField(max_length=50, blank=True, null=True)
+    # cover_image_url = models.URLField(blank=True, null=True)
+    cover_image_url = models.URLField(max_length=1000, blank=True, null=True)
+    isbn = models.CharField(max_length=200, blank=True, null=True)  # updated
+    publisher = models.CharField(max_length=300, blank=True, null=True)
     genres = models.ManyToManyField(Genre, blank=True)
-    google_book_id = models.CharField(max_length=255, unique = True, blank = True, null = True)
+    google_book_id = models.CharField(max_length=255, unique=True, blank=True, null=True)
 
     def __str__(self):
         return self.title

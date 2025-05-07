@@ -34,9 +34,6 @@
                     {% if book_item.volumeInfo.imageLinks and book_item.volumeInfo.imageLinks.thumbnail %}
                         <img src="{{ book_item.volumeInfo.imageLinks.thumbnail }}" alt="Book Cover" style="max-width: 100px;">
                     {% endif %}
-                    <p>
-                        <a href="{% url 'create_post' book_item.id %}">Create a post about this book</a>
-                    </p>
                     <hr>
                 </li>
             {% endfor %}

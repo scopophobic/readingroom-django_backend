@@ -11,7 +11,7 @@ class Post(models.Model):
     book = models.ForeignKey(Book, on_delete=models.SET_NULL, null=True, blank=True)
     content = models.TextField()
     image = models.ImageField(upload_to='post_images/', null=True, blank=True)
-    rating = models.PositiveSmallIntegerField(null=True, blank=True)  # Optional 1–5 stars
+    # rating = models.PositiveSmallIntegerField(null=True, blank=True)  # Optional 1–5 stars
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

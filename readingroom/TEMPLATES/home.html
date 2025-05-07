@@ -8,11 +8,6 @@
   <h2>Welcome, {{ user.first_name }}!</h2>
   <a href="/accounts/logout/">Logout</a>
 
-  <form method="get" action="{% url 'create_post_no_book' %}">
-    <button type="submit">Write a new post</button>
-  </form>
-
-
 {% else %}
   <h2>Welcome to the site!</h2>
   <a href="/accounts/login/">Login</a>
