@@ -1,5 +1,3 @@
-
-
 from django.contrib import admin
 from django.urls import path,include
 from . import views
@@ -36,5 +34,5 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     # path('api/posts/', include('posts.urls')),
     # path('api/books/', include('books.urls')),
-    # path('api/comments/', include('comments.urls')),
+    path('api/', include('comments.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

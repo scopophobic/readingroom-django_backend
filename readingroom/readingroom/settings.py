@@ -165,6 +165,9 @@ TEMPLATES = [
         },
     },
 ]
+# this is for the media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 WSGI_APPLICATION = "readingroom.wsgi.application"
 

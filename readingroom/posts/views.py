@@ -6,9 +6,11 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Post
 from .models import Book
 # from .serializers import PostSerializer
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from .models import Post
-from .serializers import PostCreateSerializer
+from .serializers import PostCreateSerializer, PostSerializer
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample, OpenApiResponse
+from django.shortcuts import get_object_or_404
 
 class PostCreateAPIView(generics.CreateAPIView):
     queryset = Post.objects.all()
@@ -16,6 +18,48 @@ class PostCreateAPIView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'content': {
+                    'type': 'string',
+                    'description': 'The content of the post',
+                    'example': 'This is a great book! I really enjoyed reading it.'
+                },
+                'book': {
+                    'type': 'string',
+                    'description': 'Google Books ID of the associated book (optional)',
+                    'example': 'zyTCAlFPjgYC'
+                }
+            },
+            'required': ['content']
+        }
+    },
+    responses={
+        201: {
+            'description': 'Post created successfully',
+            'type': 'object',
+            'properties': {
+                'message': {'type': 'string', 'example': 'Post created successfully'},
+                'post_id': {'type': 'integer', 'example': 1}
+            }
+        },
+        400: {
+            'description': 'Bad request - Missing required fields',
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string', 'example': 'Post content is required.'}
+            }
+        },
+        401: {
+            'description': 'Unauthorized - Authentication required'
+        }
+    },
+    description='Create a new post. The post can optionally be associated with a book using its Google Books ID.',
+    summary='Create a new post'
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_post(request):
@@ -43,6 +87,18 @@ def create_post(request):
 
 
 
+@extend_schema(
+    responses={
+        200: OpenApiResponse(
+            description="List of posts retrieved successfully",
+            response=PostSerializer(many=True)
+        ),
+        401: OpenApiResponse(description="Authentication required"),
+    },
+    description="Retrieve a list of all posts, ordered by creation date (newest first)",
+    summary="List all posts",
+    tags=["Posts"]
+)
 @api_view(['GET'])
 def list_posts_api(request):
     posts = Post.objects.all().order_by('-created_at')
@@ -198,3 +254,39 @@ def get_or_create_book(google_book_id):
 #         form = PostForm()
 
 #     return render(request, 'posts/create_post.html', {'form': form, 'book': book})
+
+class PostListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        book_id = self.request.query_params.get('book_id')
+        if book_id:
+            return Post.objects.filter(book_id=book_id)
+        return Post.objects.all()
+
+    def perform_create(self, serializer):
+        book_id = self.request.data.get('book')
+        if book_id:
+            book = get_object_or_404(Book, id=book_id)
+            serializer.save(user=self.request.user, book=book)
+        else:
+            serializer.save(user=self.request.user)
+
+class PostRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    lookup_url_kwarg = 'post_id'
+
+    def get_queryset(self):
+        return Post.objects.all()
+
+    def perform_update(self, serializer):
+        if serializer.instance.user != self.request.user:
+            raise permissions.PermissionDenied("You can only edit your own posts")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if instance.user != self.request.user:
+            raise permissions.PermissionDenied("You can only delete your own posts")
+        instance.delete()

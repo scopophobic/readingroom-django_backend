@@ -7,7 +7,8 @@ from .models import Book
 from .serializers import BookSerializer
 # from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-# Create your views here.
+from rest_framework import generics, permissions, status
+from django.conf import settings
 
 
 # def trying_fetch_book(request):
@@ -39,43 +40,19 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 
 def fetch_books_from_api(request):
-    book_data = None
-    if request.method == 'POST':
-        query = request.POST.get('query')
-        if query:
-            api_url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
-            try:
-                response = requests.get(api_url)
-                response.raise_for_status()
-                data = response.json()
+    query = request.GET.get('q', '')
+    if not query:
+        return Response({'error': 'Query parameter "q" is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-                if 'items' in data:
-                    book_data = data['items']
-                else:
-                    messages.info(request, f"No books found for query: '{query}'")
-
-            except requests.exceptions.RequestException as e:
-                messages.error(request, f"Error fetching data from Google Books API: {e}")
-            except Exception as e:
-                messages.error(request, f"An unexpected error occurred: {e}")
-
-    return render(request, 'fetch_book.html', {'book_data': book_data})
+    url = f'https://www.googleapis.com/books/v1/volumes?q={query}&key={settings.GOOGLE_BOOKS_API_KEY}'
+    response = requests.get(url)
+    return Response(response.json())
 
 
 def book_detail(request, book_id):
-    api_url = f"https://www.googleapis.com/books/v1/volumes/{book_id}"
-    try:
-        response = requests.get(api_url)
-        response.raise_for_status()
-        book_info = response.json().get('volumeInfo', {})
-        # In the future, for your API, you might return this book_info as a JSON response
-        return render(request, 'book_details.html', {'book': book_info})
-    except requests.exceptions.RequestException as e:
-        messages.error(request, f"Error fetching book details: {e}")
-        return render(request, 'book_details.html', {'error': f"Could not retrieve book details: {e}"})
-    except Exception as e:
-        messages.error(request, f"An unexpected error occurred: {e}")
-        return render(request, 'book_details.html', {'error': f"An unexpected error occurred: {e}"})
+    book = get_object_or_404(Book, id=book_id)
+    serializer = BookSerializer(book)
+    return Response(serializer.data)
 
 
 @extend_schema(
@@ -84,59 +61,74 @@ def book_detail(request, book_id):
     ]
 )
 class GoogleBooksSearchView(APIView):
+    permission_classes = [permissions.AllowAny]
+
     def get(self, request):
-        query = request.query_params.get('q')
+        query = request.query_params.get('q', '')
         if not query:
-            return Response({'error': 'Query parameter `q` is required'}, status=400)
+            return Response({'error': 'Query parameter "q" is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        url = f'https://www.googleapis.com/books/v1/volumes?q={query}'
+        url = f'https://www.googleapis.com/books/v1/volumes?q={query}&key={settings.GOOGLE_BOOKS_API_KEY}'
         response = requests.get(url)
-
-        if response.status_code != 200:
-            return Response({'error': 'Failed to fetch from Google Books'}, status=500)
-
-        books = []
-        for item in response.json().get('items', []):
-            info = item['volumeInfo']
-            books.append({
-                'google_book_id': item['id'],
-                'title': info.get('title'),
-                'authors': ', '.join(info.get('authors', [])),
-                'description': info.get('description'),
-                'publication_date': info.get('publishedDate'),
-                'cover_image_url': info.get('imageLinks', {}).get('thumbnail'),
-                'publisher': info.get('publisher'),
-                'isbn': next((id['identifier'] for id in info.get('industryIdentifiers', []) if id['type'] == 'ISBN_13'), None),
-            })
-
-        return Response(books, status=200)
-    
+        return Response(response.json())
 
 
 class SaveGoogleBookView(APIView):
-    # permission_classes = [IsAuthenticated]  # enable if auth is required
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        data = request.data
+        book_id = request.data.get('book_id')
+        if not book_id:
+            return Response({'error': 'Book ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        google_book_id = data.get('google_book_id')
-        if not google_book_id:
-            return Response({'error': 'google_book_id is required'}, status=400)
+        # Check if book already exists
+        if Book.objects.filter(google_books_id=book_id).exists():
+            return Response({'error': 'Book already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Prevent duplicate entry
-        if Book.objects.filter(google_book_id=google_book_id).exists():
-            return Response({'message': 'Book already exists'}, status=200)
+        # Fetch book details from Google Books API
+        url = f'https://www.googleapis.com/books/v1/volumes/{book_id}?key={settings.GOOGLE_BOOKS_API_KEY}'
+        response = requests.get(url)
+        if response.status_code != 200:
+            return Response({'error': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        book_data = response.json()
+        volume_info = book_data.get('volumeInfo', {})
+
+        # Create book object
         book = Book.objects.create(
-            title=data.get('title'),
-            authors=data.get('authors'),
-            description=data.get('description'),
-            publication_date=data.get('publication_date', None),
-            cover_image_url=data.get('cover_image_url'),
-            publisher=data.get('publisher'),
-            isbn=data.get('isbn'),
-            google_book_id=google_book_id,
+            title=volume_info.get('title', ''),
+            author=', '.join(volume_info.get('authors', [])),
+            description=volume_info.get('description', ''),
+            google_books_id=book_id,
+            cover_image=volume_info.get('imageLinks', {}).get('thumbnail', ''),
+            added_by=request.user
         )
 
         serializer = BookSerializer(book)
-        return Response(serializer.data, status=201)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class BookListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = BookSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = Book.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(added_by=self.request.user)
+
+
+class BookRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = BookSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    lookup_url_kwarg = 'book_id'
+    queryset = Book.objects.all()
+
+    def perform_update(self, serializer):
+        if serializer.instance.added_by != self.request.user:
+            raise permissions.PermissionDenied("You can only edit books you added")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if instance.added_by != self.request.user:
+            raise permissions.PermissionDenied("You can only delete books you added")
+        instance.delete()
